@@ -55,6 +55,7 @@ uint8_t aShow[100] = {0};
 uint8_t usbcdcflag = 0;
 unsigned short key_value;
 
+extern uint32_t rtc_ResetFlag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,6 +104,20 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_RTC_Init();
+	
+	/* Turn on LED1: External reset occurred */
+	if(rtc_ResetFlag != 1)	
+	{
+		for(uint8_t i=0;i<10;i++)
+		{
+			 HAL_GPIO_WritePin(C13_GPIO_Port,C13_Pin,GPIO_PIN_RESET);
+			 HAL_Delay(100-1);
+			 HAL_GPIO_WritePin(C13_GPIO_Port,C13_Pin,GPIO_PIN_SET);
+			 HAL_Delay(100-1);
+		}
+		//HAL_Delay(1500-1);
+	}
+	
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
@@ -115,6 +130,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		
 	  /* C13 ºôÎüµÆ²âÊÔ */
 	  /* C13 Breathing Lamp test */
 		static uint8_t pwmset;
@@ -154,8 +170,8 @@ int main(void)
 			}
 		}
 	  
-	  	/* USB RTC ADC ²âÊÔ */
-	   /* USB RTC ADC Test */
+	  /* USB RTC ADC ²âÊÔ */
+	  /* USB RTC ADC Test */
 	  if(HAL_GetTick() - tick1 >= 1000)
 	  {
 		  tick1 = HAL_GetTick();
@@ -186,14 +202,15 @@ int main(void)
 		  
 		  if(key_value == KEY0_UP_SHORT)
 		  {
-			 breathsw = 0;
-			 HAL_GPIO_WritePin(C13_GPIO_Port,C13_Pin,GPIO_PIN_SET);
-			 CDC_Transmit_FS(aShow,sprintf((char *)aShow, "\r\nShort Press ¶Ì°´\r\n"));
+			  breathsw = 0;
+			  HAL_GPIO_WritePin(C13_GPIO_Port,C13_Pin,HAL_GPIO_ReadPin(C13_GPIO_Port,C13_Pin)==GPIO_PIN_SET?GPIO_PIN_RESET:GPIO_PIN_SET);
+				
+			  CDC_Transmit_FS(aShow,sprintf((char *)aShow, "\r\nShort Press ¶Ì°´\r\n"));
 		  }
 		  else if(key_value == KEY0_UP_DOUBLE)
 		  {
 			  breathsw = 0;
-			  HAL_GPIO_WritePin(C13_GPIO_Port,C13_Pin,GPIO_PIN_RESET);
+			  HAL_GPIO_WritePin(C13_GPIO_Port,C13_Pin,HAL_GPIO_ReadPin(C13_GPIO_Port,C13_Pin)==GPIO_PIN_SET?GPIO_PIN_RESET:GPIO_PIN_SET);
 			  
 			  CDC_Transmit_FS(aShow,sprintf((char *)aShow, "\r\nDouble Press Ë«»÷\r\n"));
 		  }
